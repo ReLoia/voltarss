@@ -88,25 +88,36 @@ func FetchCircolari(page string) []Circolare {
 		circEls = circEls.Slice(5, 10)
 	}
 
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 	circEls.Each(func(i int, s *goquery.Selection) {
-		pageLink := s.AttrOr("href", "")
-		card := s.Find("article.card-article")
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			pageLink := s.AttrOr("href", "")
+			card := s.Find("article.card-article")
 
-		if pageLink == "" || card == nil {
-			return
-		}
+			if pageLink == "" || card == nil {
+				return
+			}
 
-		titolo := strings.TrimSpace(card.Find("h2.h3").Text())
-		shortDescription := strings.TrimSpace(card.Find(".card-article-content p").Text())
+			titolo := strings.TrimSpace(card.Find("h2.h3").Text())
+			shortDescription := strings.TrimSpace(card.Find(".card-article-content p").Text())
 
-		circolare := SimpleCircolare{
-			Title:       titolo,
-			Description: shortDescription,
-			Link:        pageLink,
-		}
-		c := circolare.ToCircolare()
-		circolari = append(circolari, c)
+			circolare := SimpleCircolare{
+				Title:       titolo,
+				Description: shortDescription,
+				Link:        pageLink,
+			}
+			c := circolare.ToCircolare()
+
+			mu.Lock()
+			circolari = append(circolari, c)
+			mu.Unlock()
+		}()
 	})
+
+	wg.Wait()
 
 	cache.Store(cacheKey, circolari)
 	cacheTimes.Store(cacheKey, time.Now())
