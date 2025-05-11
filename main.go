@@ -1,0 +1,54 @@
+package main
+
+import (
+	"errors"
+	"fmt"
+	"github.com/gorilla/feeds"
+	"net/http"
+	"time"
+	"voltarss/data"
+)
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", getRss)
+
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
+	fmt.Println("Starting server on :8080")
+
+	err := server.ListenAndServe()
+
+	if errors.Is(err, http.ErrServerClosed) {
+		fmt.Println("server closed")
+	} else if err != nil {
+		panic(err)
+	}
+}
+
+func getRss(ResponseWriter http.ResponseWriter, Request *http.Request) {
+	page := Request.URL.Query().Get("page")
+	fmt.Println("page:", page)
+
+	feed := &feeds.Feed{
+		Title:       "reloia's - IISS VOLTA - DE GEMMIS",
+		Description: "Feed RSS creato da ReLoia per l'IISS VOLTA - DE GEMMIS",
+		Link:        &feeds.Link{Href: "https://iissvoltadegemmis.edu.it/circolare/"},
+		Author:      &feeds.Author{Name: "ReLoia", Email: "reloia@mntcrl.it"},
+		Created:     time.Now(),
+	}
+
+	rss, err := feed.ToAtom()
+
+	if err != nil {
+		panic(err)
+	}
+
+	ResponseWriter.Header().Set("Content-Type", "application/rss+xml")
+	ResponseWriter.WriteHeader(http.StatusOK)
+
+	_, err = ResponseWriter.Write([]byte(rss))
+}
