@@ -31,7 +31,9 @@ func main() {
 
 func getRss(ResponseWriter http.ResponseWriter, Request *http.Request) {
 	page := Request.URL.Query().Get("page")
-	fmt.Println("page:", page)
+	if page == "" {
+		page = "1"
+	}
 
 	feed := &feeds.Feed{
 		Title:       "reloia's - IISS VOLTA - DE GEMMIS",
@@ -39,6 +41,12 @@ func getRss(ResponseWriter http.ResponseWriter, Request *http.Request) {
 		Link:        &feeds.Link{Href: "https://iissvoltadegemmis.edu.it/circolare/"},
 		Author:      &feeds.Author{Name: "ReLoia", Email: "reloia@mntcrl.it"},
 		Created:     time.Now(),
+	}
+
+	circolari := data.FetchCircolari(page)
+
+	for _, c := range circolari {
+		feed.Items = append(feed.Items, c.ToRssItem())
 	}
 
 	rss, err := feed.ToAtom()
