@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/gorilla/feeds"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 	"voltarss/data"
 )
@@ -38,7 +40,7 @@ func getRss(ResponseWriter http.ResponseWriter, Request *http.Request) {
 	feed := &feeds.Feed{
 		Title:       "reloia's - IISS VOLTA - DE GEMMIS",
 		Description: "Feed RSS creato da ReLoia per l'IISS VOLTA - DE GEMMIS",
-		Link:        &feeds.Link{Href: "https://iissvoltadegemmis.edu.it/circolare/"},
+		Link:        &feeds.Link{Href: "https://iissvoltadegemmis.edu.it/circolare/", Rel: "self", Type: "text/html"},
 		Author:      &feeds.Author{Name: "ReLoia", Email: "reloia@mntcrl.it"},
 		Created:     time.Now(),
 	}
@@ -50,6 +52,16 @@ func getRss(ResponseWriter http.ResponseWriter, Request *http.Request) {
 	}
 
 	rss, err := feed.ToAtom()
+
+	pageN, _ := strconv.Atoi(page)
+
+	customLinks := "  <link rel=\"first\" href=\"https://reloia.ddns.net/voltarss?page=1\"></link>\n"
+	if pageN > 1 {
+		customLinks += fmt.Sprintf("  <link rel=\"prev\" href=\"https://reloia.ddns.net/voltarss?page=%s\"></link>\n", strconv.Itoa(pageN-1))
+	}
+	customLinks += fmt.Sprintf("  <link rel=\"next\" href=\"https://reloia.ddns.net/voltarss?page=%s\"></link>\n", strconv.Itoa(pageN+1))
+
+	rss = strings.Replace(rss, "</subtitle>", "</subtitle>\n"+customLinks, 1)
 
 	if err != nil {
 		panic(err)

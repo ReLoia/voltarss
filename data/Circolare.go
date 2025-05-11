@@ -116,7 +116,6 @@ func FetchCircolari(page string) []Circolare {
 			mu.Unlock()
 		}()
 	})
-
 	wg.Wait()
 
 	cache.Store(cacheKey, circolari)

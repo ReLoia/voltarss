@@ -81,7 +81,7 @@ func (c SimpleCircolare) ToCircolare() Circolare {
 
 	pdfsEls := doc.Find(".icon.it-pdf-document").Parent()
 
-	c.Description += "<h3>Documenti allegati</h3><br>"
+	c.Description += "<br><h3>Documenti allegati</h3>"
 
 	pdfsEls.Each(func(i int, s *goquery.Selection) {
 		anchor := s.Find("a")
